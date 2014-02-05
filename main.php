@@ -14,20 +14,44 @@
 	//変更ボタンの作業での変数
 	$change_no = 0;
 	$row_no = 0;
-
+	
 	//初期化
 	$no = 1;
 	$row = 0;
 	$used_money=0;
 	$used_detail="";
-	$money_error = "";
-	$today_error = "";
-	$day_error = "";
+	$used_day="";
+	$error_no = 0;
+	$error = array	(
+					'1'=>"日付の記述は\"年/月/日\"の形で入力してください。",
+					'2'=>"金額欄に数字ではないものが含まれています。",
+					'3'=>"日付をyear/month/dayのように記述してください。"
+					);
 	//今日の日付を取得
 	$today = date('Y/m/d');
 	$month = 0;
 	$year = 0;
 	$day = 0;
+	
+	function input_check($newday,$newmoney){
+		//"/"の数を数える
+		if(substr_count($newday,"/") != 2){
+			return 1;
+		}else{
+			//年月日に分割
+			list($year,$month,$day)=explode("/",$newday);
+			
+			//数字ではない場合
+			if(!is_numeric($newmoney)){
+				return 2;
+			}
+			//ちゃんとした日付でない場合
+			if(!checkdate($month,$day,$year)){
+				return 3;
+			}
+		}
+		return 0;
+	}
 
 	if($_SERVER["REQUEST_METHOD"]=="POST"){
 		if(isset($_POST["submit"])){
@@ -39,48 +63,54 @@
 			$sql = "SELECT MAX(no) AS maxno FROM account";
 			$result = mysql_query($sql,$conn) or die(mysql_error());
 			$row = mysql_fetch_array($result);
-			if($result){
-				echo "成功";
-			}
 			//半角英数字に変換
 			$used_money = mb_convert_kana($used_money,"as");
 			$used_day = mb_convert_kana($used_day,"as");
-			//"/"の数を数える
-			if(substr_count($used_day,"/") != 2){
-				$day_error = "日付の記述は\"年/月/日\"の形で入力してください<br>";
-			}else{
-				//年月日に分割
-				list($year,$month,$day)=explode("/",$used_day);
-				
-				//数字ではない場合
-				if(!is_numeric($used_money)){
-					$money_error = "使用した金額欄に数字ではないものが含まれています。<br>";
+			//エラーの場所の番号
+			$error_no=input_check($used_day,$used_money);
+			//データベースに書き込み（何もエラーがない場合）
+			if($error_no==0){
+				$no = $row["maxno"]+1;
+				$sql = "INSERT INTO account ";
+				$sql .= "VALUE('$no','$used_day','$used_money','$used_detail')";
+				$result = mysql_query($sql,$conn) or die(mysql_error());
+				if($result){
+					echo "書き込み成功";
 				}
-				//ちゃんとした日付でない場合
-				if(!checkdate($month,$day,$year)){
-					$today_error = "日付をyear/month/dayのように記述してください。<br>";
-				}
-				//データベースに書き込み（何もエラーがない場合）
-				if(($money_error == "")&&($today_error == "")&&($day_error=="")){
-					$no = $row["maxno"]+1;
-					//todo データベースに書き込み処理
-					$sql = "INSERT INTO account ";
-					$sql .= "VALUE('$no','$used_day','$used_money','$used_detail')";
-					$result = mysql_query($sql,$conn) or die(mysql_error());
-					if($result){
-						echo "書き込み成功";
-					}
-				}
-			}
+			}	
 		}
 		if(isset($_POST["change"])){
 			//変更の場合の場所
 			$change_no = key($_POST["change"]);
 		}
+		if(isset($_POST["deside"])){
+			//決定が押された場合
+			$update_no = key($_POST["deside"]);		//更新の場所を取得
+			$update_day = htmlspecialchars($_POST["update_day"]);
+			$update_money = htmlspecialchars($_POST["update_money"]);
+			$update_detail = htmlspecialchars($_POST["update_detail"]);
+			//半角英数字に変換
+			$update_money = mb_convert_kana($update_money,"as");
+			$update_day = mb_convert_kana($update_day,"as");
+			//エラーの場所の番号
+			$error_no = input_check($update_day,$update_money);
+			if($error_no==0){
+				$sql = "UPDATE account SET date='$update_day' , money='$update_money' , detail='$update_detail' WHERE no='$update_no'";
+				$result = mysql_query($sql,$conn) or die(mysql_error());
+				if($result){
+					echo "更新成功";
+				}
+			}
+		}
 		if(isset($_POST["delete"])){
 			//削除の場合のDBの処理
+			$delete_no = key($_POST["delete"]);		//削除する場所を取得
+			$sql = "DELETE FROM account WHERE no='$delete_no'";
+			$result = mysql_query($sql,$conn) or die(mysql_error());
+			if($result){
+				echo "削除成功";
+			}
 		}
-
 	}
 
 ?>
@@ -105,14 +135,8 @@
 
 		<?php
 			//エラーあった場合の表示
-			if($money_error != ""){
-				echo $money_error;
-			}
-			if($today_error != ""){
-				echo $today_error;
-			}
-			if($day_error != ""){
-				echo $day_error;
+			if($error_no!=0){
+				echo $error[$error_no]."<br>";
 			}
 			//DBの内容表示
 			$sql = "SELECT * FROM account ORDER BY no DESC";
@@ -129,9 +153,9 @@
 					echo "<td align='right'>".$row['detail']."</td>";
 				}else{										//変更ボタン押されたところだけ
 					echo "<tr><td align='right'>".$row['no']."</td>";
-					echo "<td align='right'><input type='text' size='10' value=".$row['date']."></td>";
-					echo "<td align='right'><input type='text' size='2' value=".$row['money'].">円</td>";
-					echo "<td align='right'><input type='text' size='30' value=".$row['detail']."></td>";
+					echo "<td align='right'><input type='text' size='10' name='update_day' value=".$row['date']."></td>";
+					echo "<td align='right'><input type='text' size='2' name='update_money' value=".$row['money'].">円</td>";
+					echo "<td align='right'><input type='text' size='30' name='update_detail' value=".$row['detail']."></td>";
 				}
 				if($change_no==$row_no){					//変更ボタンが押されたところだけ決定ボタンを表示
 					echo "<td align='center'><input type='submit' value='決定' name='deside[$row_no]'></td>";
