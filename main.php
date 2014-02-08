@@ -13,14 +13,11 @@
 	
 	//変更ボタンの作業での変数
 	$change_no = 0;
-	$row_no = 0;
+	$id_no = 0;
 	
 	//初期化
 	$no = 1;
 	$row = 0;
-	$used_money=0;
-	$used_detail="";
-	$used_day="";
 	$error_no = 0;
 	$error = array	(
 					'1'=>"日付の記述は\"年/月/日\"の形で入力してください。",
@@ -29,9 +26,6 @@
 					);
 	//今日の日付を取得
 	$today = date('Y/m/d');
-	$month = 0;
-	$year = 0;
-	$day = 0;
 	
 	function input_check($newday,$newmoney){
 		//"/"の数を数える
@@ -105,10 +99,31 @@
 		if(isset($_POST["delete"])){
 			//削除の場合のDBの処理
 			$delete_no = key($_POST["delete"]);		//削除する場所を取得
+			echo $delete_no;
 			$sql = "DELETE FROM account WHERE no='$delete_no'";
 			$result = mysql_query($sql,$conn) or die(mysql_error());
 			if($result){
 				echo "削除成功";
+			}
+		}
+		
+		//ソートの処理
+		if(isset($_POST["sort"])){
+			$sort_date = $_POST["month"];	//2014-02のようなデータ
+			if($sort_date==""){
+			}else{
+				$sort_date = strtr($sort_date,"-","/");	//"-"を"/"に置換
+				/*
+					2014/02の最初(2014/02/01)
+					2014/02の最後(2014/03/01)
+					この間をMySQLでbetweenをつかって実装予定
+				*/
+				list($sort_year,$sort_month)=explode("/",$sort_date);
+				//今月
+				$now_month = date('Y/m/d',mktime(0,0,0,$sort_month,1,$sort_year));
+				//来月
+				$last_month = date('Y/m/d',mktime(0,0,0,$sort_month+1,1,$sort_year));
+				echo $now_month."<br>".$last_month."<br>";
 			}
 		}
 	}
@@ -138,37 +153,42 @@
 			if($error_no!=0){
 				echo $error[$error_no]."<br>";
 			}
-			//DBの内容表示
+			//クエリ
 			$sql = "SELECT * FROM account ORDER BY no DESC";
 			//$result = mysqli_query($link,$sql) or die(mysql_error());でも可
 			$result = mysql_query($sql,$conn) or die(mysql_error());
 			echo "<br>";
-			echo "<table border='1' bgcolor='#FFFFFF' align='left' width='700'>";
+			echo "<table border='1' bgcolor='#FFFFFF' align='left' width='700'>\n";
+			echo "<thead><tr><th>No</th><th>日付</th><th>金額</th><th>詳細</th><th colspan='2'></th>";
+			//DBの中身を表示
 			while($row = mysql_fetch_array($result)){		//mysqli_fetch_assoc($result)でも書ける
-				$row_no = $row['no'];
-				if($change_no!=$row_no){					//変更ボタン押されてないところ
-					echo "<tr><td align='right'>".$row['no']."</td>";
-					echo "<td align='right'>".$row['date']."</td>";
-					echo "<td align='right'>".$row['money']."円</td>";
-					echo "<td align='right'>".$row['detail']."</td>";
+				$id_no = $row['no'];
+				if($change_no!=$id_no){					//変更ボタン押されてないところ
+					echo "<tr><td align='right'>".$row['no']."</td>\n";
+					echo "<td align='right'>".$row['date']."</td>\n";
+					echo "<td align='right'>".$row['money']."円</td>\n";
+					echo "<td align='right'>".$row['detail']."</td>\n";
 				}else{										//変更ボタン押されたところだけ
-					echo "<tr><td align='right'>".$row['no']."</td>";
-					echo "<td align='right'><input type='text' size='10' name='update_day' value=".$row['date']."></td>";
-					echo "<td align='right'><input type='text' size='2' name='update_money' value=".$row['money'].">円</td>";
-					echo "<td align='right'><input type='text' size='30' name='update_detail' value=".$row['detail']."></td>";
+					echo "<tr><td align='right'>".$row['no']."</td>\n";
+					echo "<td align='right'><input type='text' size='10' name='update_day' value=".$row['date']."></td>\n";
+					echo "<td align='right'><input type='text' size='2' name='update_money' value=".$row['money'].">円</td>\n";
+					echo "<td align='right'><input type='text' size='30' name='update_detail' value=".$row['detail']."></td>\n";
 				}
-				if($change_no==$row_no){					//変更ボタンが押されたところだけ決定ボタンを表示
-					echo "<td align='center'><input type='submit' value='決定' name='deside[$row_no]'></td>";
+				if($change_no==$id_no){					//変更ボタンが押されたところだけ決定ボタンを表示
+					echo "<td align='center'><input type='submit' value='決定' name='deside[$id_no]'></td>\n";
 				}else{
-					echo "<td align='center'><input type='submit' value='変更' name='change[$row_no]'></td>";
+					echo "<td align='center'><input type='submit' value='変更' name='change[$id_no]'></td>\n";
 				}
-				echo "<td align='center'><input type='submit' value='削除' name='delete[$row_no]'></td>";
-				echo "</tr>";
+				echo "<td align='center'><input type='submit' value='削除' name='delete[$id_no]'></td>\n";
+				echo "</tr>\n";
 			}
-			echo "</table>";
-			echo $change_no;
-		?>
+			echo "</table>\n<br>";
+			echo "<br clear='all'>";
+			echo "月のソート : <input type='month' name='month'>&nbsp;";
+			echo "<input type='submit' value='ソートする' name='sort'>";
 
+		?>
+  
 	</form>
 
 </body>
