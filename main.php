@@ -1,5 +1,8 @@
 <?php
-
+	/*
+	ソート状態で、削除や変更すると、ソート解除される。
+	恐らく初期化のせい
+	*/
 	//DB処理
 	//接続設定
 	$sv = "";
@@ -19,6 +22,7 @@
 	$no = 1;
 	$row = 0;
 	$error_no = 0;
+	static $sort_flg = 0;
 	$error = array	(
 					'1'=>"日付の記述は\"年/月/日\"の形で入力してください。",
 					'2'=>"金額欄に数字ではないものが含まれています。",
@@ -112,11 +116,11 @@
 			$sort_date = $_POST["month"];	//2014-02のようなデータ
 			if($sort_date==""){
 			}else{
+				$sort_flg = 1;
 				$sort_date = strtr($sort_date,"-","/");	//"-"を"/"に置換
 				/*
 					2014/02の最初(2014/02/01)
 					2014/02の最後(2014/03/01)
-					この間をMySQLでbetweenをつかって実装予定
 				*/
 				list($sort_year,$sort_month)=explode("/",$sort_date);
 				//今月
@@ -125,6 +129,10 @@
 				$last_month = date('Y/m/d',mktime(0,0,0,$sort_month+1,1,$sort_year));
 				echo $now_month."<br>".$last_month."<br>";
 			}
+		}
+		//ソート解除
+		if(isset($_POST["unsort"])){
+			$sort_flg = 0;
 		}
 	}
 
@@ -140,21 +148,28 @@
 
 <h1>簡易家計簿</h1>
 
-
-
 	<form name="myform" action="" method="POST" enctype="multipart/form-data">
+	<?php 
+		echo $sort_flg."<br>";
+		if($sort_flg==0){
+	?>
 		日付<input type="text" name="used_day" value="<?=$today?>" size="15">&nbsp;
 		金額<input type="text" name="used_money" value="" size="8">円&nbsp;
 		内容<input type="text" name="used_detail" value="" size="30">&nbsp;
 		<input type="submit" name="submit" value="入力"><br>
-
+		
 		<?php
+			}
 			//エラーあった場合の表示
 			if($error_no!=0){
 				echo $error[$error_no]."<br>";
 			}
 			//クエリ
-			$sql = "SELECT * FROM account ORDER BY no DESC";
+			if($sort_flg==1){
+				$sql = "SELECT * FROM account WHERE date >= '$now_month' AND date < '$last_month' ORDER BY no DESC";
+			}else{
+				$sql = "SELECT * FROM account ORDER BY no DESC";
+			}
 			//$result = mysqli_query($link,$sql) or die(mysql_error());でも可
 			$result = mysql_query($sql,$conn) or die(mysql_error());
 			echo "<br>";
@@ -184,9 +199,12 @@
 			}
 			echo "</table>\n<br>";
 			echo "<br clear='all'>";
-			echo "月のソート : <input type='month' name='month'>&nbsp;";
-			echo "<input type='submit' value='ソートする' name='sort'>";
-
+			if($sort_flg==1){
+				echo "<input type='submit' value='ソート解除' name='unsort'>";
+			}else{
+				echo "月のソート : <input type='month' name='month'>&nbsp;";
+				echo "<input type='submit' value='ソートする' name='sort'>";
+			}
 		?>
   
 	</form>
