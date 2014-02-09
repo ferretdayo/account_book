@@ -1,8 +1,4 @@
 <?php
-	/*
-	ソート状態で、削除や変更すると、ソート解除される。
-	恐らく初期化のせい
-	*/
 	//DB処理
 	//接続設定
 	$sv = "";
@@ -22,7 +18,7 @@
 	$no = 1;
 	$row = 0;
 	$error_no = 0;
-	static $sort_flg = 0;
+	$sort_flg = 0;
 	$error = array	(
 					'1'=>"日付の記述は\"年/月/日\"の形で入力してください。",
 					'2'=>"金額欄に数字ではないものが含まれています。",
@@ -127,7 +123,6 @@
 				$now_month = date('Y/m/d',mktime(0,0,0,$sort_month,1,$sort_year));
 				//来月
 				$last_month = date('Y/m/d',mktime(0,0,0,$sort_month+1,1,$sort_year));
-				echo $now_month."<br>".$last_month."<br>";
 			}
 		}
 		//ソート解除
@@ -150,7 +145,6 @@
 
 	<form name="myform" action="" method="POST" enctype="multipart/form-data">
 	<?php 
-		echo $sort_flg."<br>";
 		if($sort_flg==0){
 	?>
 		日付<input type="text" name="used_day" value="<?=$today?>" size="15">&nbsp;
@@ -165,39 +159,49 @@
 				echo $error[$error_no]."<br>";
 			}
 			//クエリ
-			if($sort_flg==1){
+			if($sort_flg==1){	//ソート時
 				$sql = "SELECT * FROM account WHERE date >= '$now_month' AND date < '$last_month' ORDER BY no DESC";
 			}else{
 				$sql = "SELECT * FROM account ORDER BY no DESC";
 			}
 			//$result = mysqli_query($link,$sql) or die(mysql_error());でも可
 			$result = mysql_query($sql,$conn) or die(mysql_error());
-			echo "<br>";
-			echo "<table border='1' bgcolor='#FFFFFF' align='left' width='700'>\n";
-			echo "<thead><tr><th>No</th><th>日付</th><th>金額</th><th>詳細</th><th colspan='2'></th>";
-			//DBの中身を表示
-			while($row = mysql_fetch_array($result)){		//mysqli_fetch_assoc($result)でも書ける
-				$id_no = $row['no'];
-				if($change_no!=$id_no){					//変更ボタン押されてないところ
-					echo "<tr><td align='right'>".$row['no']."</td>\n";
-					echo "<td align='right'>".$row['date']."</td>\n";
-					echo "<td align='right'>".$row['money']."円</td>\n";
-					echo "<td align='right'>".$row['detail']."</td>\n";
-				}else{										//変更ボタン押されたところだけ
-					echo "<tr><td align='right'>".$row['no']."</td>\n";
-					echo "<td align='right'><input type='text' size='10' name='update_day' value=".$row['date']."></td>\n";
-					echo "<td align='right'><input type='text' size='2' name='update_money' value=".$row['money'].">円</td>\n";
-					echo "<td align='right'><input type='text' size='30' name='update_detail' value=".$row['detail']."></td>\n";
+			if(!mysql_fetch_array($result)&&$sort_flg==1){	//ソートした際、何もなかった場合
+				echo "<br>該当するものはありませんでした。ʅ(｡◔‸◔｡)ʃ<br>";
+			}else{
+				$result = mysql_query($sql,$conn) or die(mysql_error());	//一回mysql_fetch_arrayで呼び出したため、1行目なくなるので、もう一度定義
+				echo "<br>";
+				echo "<table border='1' bgcolor='#FFFFFF' align='left' width='700'>\n";
+				echo "<thead><tr><th>No</th><th>日付</th><th>金額</th><th>詳細</th>";
+				if($sort_flg==0){
+					echo "<th colspan='2'></th>";
 				}
-				if($change_no==$id_no){					//変更ボタンが押されたところだけ決定ボタンを表示
-					echo "<td align='center'><input type='submit' value='決定' name='deside[$id_no]'></td>\n";
-				}else{
-					echo "<td align='center'><input type='submit' value='変更' name='change[$id_no]'></td>\n";
+				//DBの中身を表示
+				while($row = mysql_fetch_array($result)){		//mysqli_fetch_assoc($result)でも書ける
+					$id_no = $row['no'];
+					if($change_no!=$id_no){					//変更ボタン押されてないところ
+						echo "<tr><td align='right'>".$row['no']."</td>\n";
+						echo "<td align='right'>".$row['date']."</td>\n";
+						echo "<td align='right'>".$row['money']."円</td>\n";
+						echo "<td align='right'>".$row['detail']."</td>\n";
+					}else{										//変更ボタン押されたところだけ
+						echo "<tr><td align='right'>".$row['no']."</td>\n";
+						echo "<td align='right'><input type='text' size='10' name='update_day' value=".$row['date']."></td>\n";
+						echo "<td align='right'><input type='text' size='2' name='update_money' value=".$row['money'].">円</td>\n";
+						echo "<td align='right'><input type='text' size='30' name='update_detail' value=".$row['detail']."></td>\n";
+					}
+					if($sort_flg==0){	//ソートされていないとき
+						if($change_no==$id_no){					//変更ボタンが押されたところだけ決定ボタンを表示
+							echo "<td align='center'><input type='submit' value='決定' name='deside[$id_no]'></td>\n";
+						}else{
+							echo "<td align='center'><input type='submit' value='変更' name='change[$id_no]'></td>\n";
+						}
+						echo "<td align='center'><input type='submit' value='削除' name='delete[$id_no]'></td>\n";
+					}
+					echo "</tr>\n";
 				}
-				echo "<td align='center'><input type='submit' value='削除' name='delete[$id_no]'></td>\n";
-				echo "</tr>\n";
+				echo "</table>\n<br>";
 			}
-			echo "</table>\n<br>";
 			echo "<br clear='all'>";
 			if($sort_flg==1){
 				echo "<input type='submit' value='ソート解除' name='unsort'>";
