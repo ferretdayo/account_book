@@ -200,6 +200,18 @@
 					}
 					echo "</tr>\n";
 				}
+				//総額をはじき出す
+				if($sort_flg==0){	//ソートされていないとき
+					$sql = "SELECT SUM(money) AS sum_money FROM account";
+				}else{	//ソートされた時
+					$sql = "SELECT SUM(money) AS sum_money FROM account WHERE date >= '$now_month' AND date < '$last_month'";
+				}
+				$result = mysql_query($sql,$conn) or die(mysql_error());
+				$row = mysql_fetch_array($result);
+				$sum_money = $row["sum_money"];
+				echo "<tr><td>総額</td>";
+				echo "<td colspan='2' align='right'>{$sum_money}円</td>";
+				echo "</tr>";
 				echo "</table>\n<br>";
 			}
 			echo "<br clear='all'>";
