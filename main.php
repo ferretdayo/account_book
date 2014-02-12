@@ -192,11 +192,11 @@
 					}
 					if($sort_flg==0){	//ソートされていないとき
 						if($change_no==$id_no){					//変更ボタンが押されたところだけ決定ボタンを表示
-							echo "<td align='center'><input type='submit' value='決定' name='deside[$id_no]'></td>\n";
+							echo "<td align='center'><input type='submit' value='決定' name='deside[{$id_no}]'></td>\n";
 						}else{
-							echo "<td align='center'><input type='submit' value='変更' name='change[$id_no]'></td>\n";
+							echo "<td align='center'><input type='submit' value='変更' name='change[{$id_no}]'></td>\n";
 						}
-						echo "<td align='center'><input type='submit' value='削除' name='delete[$id_no]'></td>\n";
+						echo "<td align='center'><input type='submit' value='削除' name='delete[{$id_no}]'></td>\n";
 					}
 					echo "</tr>\n";
 				}
