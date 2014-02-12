@@ -46,6 +46,30 @@
 		}
 		return 0;
 	}
+	
+	function show($row,$id_no,$change_no,$sort_flg){
+		$id_no = $row['no'];
+		if($change_no!=$id_no){					//変更ボタン押されてないところ
+			echo "<tr><td align='right'>".$row['no']."</td>\n";
+			echo "<td align='right'>".$row['date']."</td>\n";
+			echo "<td align='right'>".$row['money']."円</td>\n";
+			echo "<td align='right'>".$row['detail']."</td>\n";
+		}else{										//変更ボタン押されたところだけ
+			echo "<tr><td align='right'>".$row['no']."</td>\n";
+			echo "<td align='right'><input type='text' size='10' name='update_day' value=".$row['date']."></td>\n";
+			echo "<td align='right'><input type='text' size='2' name='update_money' value=".$row['money'].">円</td>\n";
+			echo "<td align='right'><input type='text' size='30' name='update_detail' value=".$row['detail']."></td>\n";
+		}
+		if($sort_flg==0){	//ソートされていないとき
+			if($change_no==$id_no){					//変更ボタンが押されたところだけ決定ボタンを表示
+				echo "<td align='center'><input type='submit' value='決定' name='deside[{$id_no}]'></td>\n";
+			}else{
+				echo "<td align='center'><input type='submit' value='変更' name='change[{$id_no}]'></td>\n";
+			}
+			echo "<td align='center'><input type='submit' value='削除' name='delete[{$id_no}]'></td>\n";
+		}
+		echo "</tr>\n";
+	}
 
 	if($_SERVER["REQUEST_METHOD"]=="POST"){
 		if(isset($_POST["submit"])){
@@ -177,27 +201,7 @@
 				}
 				//DBの中身を表示
 				while($row = mysql_fetch_array($result)){		//mysqli_fetch_assoc($result)でも書ける
-					$id_no = $row['no'];
-					if($change_no!=$id_no){					//変更ボタン押されてないところ
-						echo "<tr><td align='right'>".$row['no']."</td>\n";
-						echo "<td align='right'>".$row['date']."</td>\n";
-						echo "<td align='right'>".$row['money']."円</td>\n";
-						echo "<td align='right'>".$row['detail']."</td>\n";
-					}else{										//変更ボタン押されたところだけ
-						echo "<tr><td align='right'>".$row['no']."</td>\n";
-						echo "<td align='right'><input type='text' size='10' name='update_day' value=".$row['date']."></td>\n";
-						echo "<td align='right'><input type='text' size='2' name='update_money' value=".$row['money'].">円</td>\n";
-						echo "<td align='right'><input type='text' size='30' name='update_detail' value=".$row['detail']."></td>\n";
-					}
-					if($sort_flg==0){	//ソートされていないとき
-						if($change_no==$id_no){					//変更ボタンが押されたところだけ決定ボタンを表示
-							echo "<td align='center'><input type='submit' value='決定' name='deside[{$id_no}]'></td>\n";
-						}else{
-							echo "<td align='center'><input type='submit' value='変更' name='change[{$id_no}]'></td>\n";
-						}
-						echo "<td align='center'><input type='submit' value='削除' name='delete[{$id_no}]'></td>\n";
-					}
-					echo "</tr>\n";
+					show($row,$id_no,$change_no,$sort_flg);		//表示する関数show
 				}
 				//総額をはじき出す
 				if($sort_flg==0){	//ソートされていないとき
