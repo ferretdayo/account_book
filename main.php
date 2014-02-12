@@ -66,7 +66,7 @@
 			if($error_no==0){
 				$no = $row["maxno"]+1;
 				$sql = "INSERT INTO account ";
-				$sql .= "VALUE('$no','$used_day','$used_money','$used_detail')";
+				$sql .= "VALUE('{$no}','{$used_day}','{$used_money}','{$used_detail}')";
 				$result = mysql_query($sql,$conn) or die(mysql_error());
 				if($result){
 					echo "書き込み成功";
@@ -89,7 +89,7 @@
 			//エラーの場所の番号
 			$error_no = input_check($update_day,$update_money);
 			if($error_no==0){
-				$sql = "UPDATE account SET date='$update_day' , money='$update_money' , detail='$update_detail' WHERE no='$update_no'";
+				$sql = "UPDATE account SET date='{$update_day}' , money='{$update_money}' , detail='{$update_detail}' WHERE no='{$update_no}'";
 				$result = mysql_query($sql,$conn) or die(mysql_error());
 				if($result){
 					echo "更新成功";
@@ -100,7 +100,7 @@
 			//削除の場合のDBの処理
 			$delete_no = key($_POST["delete"]);		//削除する場所を取得
 			echo $delete_no;
-			$sql = "DELETE FROM account WHERE no='$delete_no'";
+			$sql = "DELETE FROM account WHERE no='{$delete_no}'";
 			$result = mysql_query($sql,$conn) or die(mysql_error());
 			if($result){
 				echo "削除成功";
@@ -160,7 +160,7 @@
 			}
 			//クエリ
 			if($sort_flg==1){	//ソート時
-				$sql = "SELECT * FROM account WHERE date >= '$now_month' AND date < '$last_month' ORDER BY no DESC";
+				$sql = "SELECT * FROM account WHERE date >= '{$now_month}' AND date < '{$last_month}' ORDER BY no DESC";
 			}else{
 				$sql = "SELECT * FROM account ORDER BY no DESC";
 			}
@@ -204,7 +204,7 @@
 				if($sort_flg==0){	//ソートされていないとき
 					$sql = "SELECT SUM(money) AS sum_money FROM account";
 				}else{	//ソートされた時
-					$sql = "SELECT SUM(money) AS sum_money FROM account WHERE date >= '$now_month' AND date < '$last_month'";
+					$sql = "SELECT SUM(money) AS sum_money FROM account WHERE date >= '{$now_month}' AND date < '{$last_month}'";
 				}
 				$result = mysql_query($sql,$conn) or die(mysql_error());
 				$row = mysql_fetch_array($result);
