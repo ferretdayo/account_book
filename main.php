@@ -110,8 +110,7 @@
 		//ソートの処理
 		if(isset($_POST["sort"])){
 			$sort_date = $_POST["month"];	//2014-02のようなデータ
-			if($sort_date==""){
-			}else{
+			if($sort_date!=""){
 				$sort_flg = 1;
 				$sort_date = strtr($sort_date,"-","/");	//"-"を"/"に置換
 				/*
