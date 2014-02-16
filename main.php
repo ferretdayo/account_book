@@ -24,7 +24,7 @@
 	$row = 0;
 	$error_no = 0;
 	$sort_flg = 0;
-	$change_array = array('');
+	$change_array = array();
 	$ischeck=0;
 	$error = array	(
 					'1'=>"日付の記述は\"年/月/日\"の形で入力してください。",
@@ -54,9 +54,10 @@
 		return 0;
 	}
 	
-	function show($row,$id_no,$change_array,$sort_flg,$ischeck){
+	function show($row,$id_no,$change_array,$sort_flg,&$ischeck/*参照渡し*/){
 		$flg = 0;
 		$id_no = $row['no'];
+		var_dump($change_array);
 		foreach($change_array as $value){
 			if($value==$id_no){										//変更ボタン押されたところだけ
 				echo "<tr>";
