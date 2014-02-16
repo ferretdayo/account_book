@@ -1,4 +1,9 @@
 <?php
+	/*
+	一括更新
+	一括削除
+	まだ未実装
+	*/
 	//DB処理
 	//接続設定
 	$sv = "";
@@ -19,6 +24,8 @@
 	$row = 0;
 	$error_no = 0;
 	$sort_flg = 0;
+	$change_array = array('');
+	$ischeck=0;
 	$error = array	(
 					'1'=>"日付の記述は\"年/月/日\"の形で入力してください。",
 					'2'=>"金額欄に数字ではないものが含まれています。",
@@ -47,25 +54,38 @@
 		return 0;
 	}
 	
-	function show($row,$id_no,$change_no,$sort_flg){
+	function show($row,$id_no,$change_array,$sort_flg,$ischeck){
+		$flg = 0;
 		$id_no = $row['no'];
-		if($change_no!=$id_no){					//変更ボタン押されてないところ
-			echo "<tr><td align='right'>".$row['no']."</td>\n";
+		foreach($change_array as $value){
+			if($value==$id_no){										//変更ボタン押されたところだけ
+				echo "<tr>";
+				echo "<td>&nbsp;</td>";
+				echo "<td align='right'>".$row['no']."</td>\n";
+				echo "<td align='right'><input type='text' size='10' name='update_day' value=".$row['date']."></td>\n";
+				echo "<td align='right'><input type='text' size='2' name='update_money' value=".$row['money'].">円</td>\n";
+				echo "<td align='right'><input type='text' size='30' name='update_detail' value=".$row['detail']."></td>\n";
+				if($sort_flg==0){	//ソートされてないとき
+					echo "<td align='center'><input type='submit' value='決定' name='deside[{$id_no}]'></td>\n";
+				}
+				$flg = 1;
+				$ischeck = 1;
+			}
+		}
+		if($flg == 0){					//変更ボタン押されてないところ
+			echo "<tr>";
+			if($sort_flg==0){
+				echo "<td align='right'><input type='checkbox' name='check[{$id_no}]'></td>";
+			}
+			echo "<td align='right'>".$row['no']."</td>\n";
 			echo "<td align='right'>".$row['date']."</td>\n";
 			echo "<td align='right'>".$row['money']."円</td>\n";
 			echo "<td align='right'>".$row['detail']."</td>\n";
-		}else{										//変更ボタン押されたところだけ
-			echo "<tr><td align='right'>".$row['no']."</td>\n";
-			echo "<td align='right'><input type='text' size='10' name='update_day' value=".$row['date']."></td>\n";
-			echo "<td align='right'><input type='text' size='2' name='update_money' value=".$row['money'].">円</td>\n";
-			echo "<td align='right'><input type='text' size='30' name='update_detail' value=".$row['detail']."></td>\n";
-		}
-		if($sort_flg==0){	//ソートされていないとき
-			if($change_no==$id_no){					//変更ボタンが押されたところだけ決定ボタンを表示
-				echo "<td align='center'><input type='submit' value='決定' name='deside[{$id_no}]'></td>\n";
-			}else{
+			if($sort_flg==0){
 				echo "<td align='center'><input type='submit' value='変更' name='change[{$id_no}]'></td>\n";
 			}
+		}
+		if($sort_flg==0){	//ソートされていないとき
 			echo "<td align='center'><input type='submit' value='削除' name='delete[{$id_no}]'></td>\n";
 		}
 		echo "</tr>\n";
@@ -99,7 +119,7 @@
 		}
 		if(isset($_POST["change"])){
 			//変更の場合の場所
-			$change_no = key($_POST["change"]);
+			$change_array[0] = key($_POST["change"]);
 		}
 		if(isset($_POST["deside"])){
 			//決定が押された場合
@@ -152,6 +172,15 @@
 		if(isset($_POST["unsort"])){
 			$sort_flg = 0;
 		}
+		//一括変更ボタン押した場合
+		if(isset($_POST["change_check"])){
+			if(isset($_POST["check"])){
+				$change_check=$_POST["check"];
+				foreach($change_check as $key => $value){
+					array_push($change_array,$key);
+				}
+			}
+		}
 	}
 
 ?>
@@ -195,13 +224,17 @@
 				$result = mysql_query($sql,$conn) or die(mysql_error());	//一回mysql_fetch_arrayで呼び出したため、1行目なくなるので、もう一度定義
 				echo "<br>";
 				echo "<table border='1' bgcolor='#FFFFFF' align='left' width='700'>\n";
-				echo "<thead><tr><th>No</th><th>日付</th><th>金額</th><th>詳細</th>";
+				echo "<thead><tr>";
+				if($sort_flg==0){		//ソートされてない場合
+					echo "<th>✔</th>";
+				}
+				echo "<th>No</th><th>日付</th><th>金額</th><th>詳細</th>";
 				if($sort_flg==0){
 					echo "<th colspan='2'></th>";
 				}
 				//DBの中身を表示
 				while($row = mysql_fetch_array($result)){		//mysqli_fetch_assoc($result)でも書ける
-					show($row,$id_no,$change_no,$sort_flg);		//表示する関数show
+					show($row,$id_no,$change_array,$sort_flg,$ischeck);		//表示する関数show
 				}
 				//総額をはじき出す
 				if($sort_flg==0){	//ソートされていないとき
@@ -212,8 +245,16 @@
 				$result = mysql_query($sql,$conn) or die(mysql_error());
 				$row = mysql_fetch_array($result);
 				$sum_money = $row["sum_money"];
-				echo "<tr><td>総額</td>";
-				echo "<td colspan='2' align='right'>{$sum_money}円</td>";
+				echo "<tr><td colspan='3' align='center'>総額</td>";
+				echo "<td colspan='1' align='right'>{$sum_money}円</td><td colspan='1'>&nbsp;</td>";
+				if($sort_flg==0){	//ソートされてない場合
+					if($ischeck==1){		//一括変更された場合
+						echo "<td align='center'><input type='submit' name='deside_check' value='一括決定'></td>";
+					}else{
+						echo "<td align='center'><input type='submit' name='change_check' value='一括変更'></td>";
+					}
+					echo "<td align='center'><input type='submit' name='delete_check' value='一括削除'></td>";
+				}
 				echo "</tr>";
 				echo "</table>\n<br>";
 			}
