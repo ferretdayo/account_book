@@ -1,10 +1,10 @@
 <?php
 	//DB処理
 	//接続設定
-	$sv = "localhost";
-	$dbname = "accountbook";
-	$user = "ferret";
-	$pass = "firstaccountbook";
+	$sv = "";
+	$dbname = "";
+	$user = "";
+	$pass = "";
 	//DBに接続する
 	$link = mysqli_connect($sv,$user,$pass,$dbname);
 	$conn = mysql_connect($sv,$user,$pass) or die(mysql_error());
@@ -21,15 +21,19 @@
 	$sort_flg = 0;
 	$change_check = array();
 	$ischeck = 0;
+	$sql = "";
+	$pay_sql = "";
+	$earn_sql = "";
 	$error = array	(
-					'1'=>"日付の記述は\"年/月/日\"の形で入力してください。",
-					'2'=>"金額欄に数字ではないものが含まれています。",
-					'3'=>"日付をyear/month/dayのように記述してください。"
+					'1'=>'日付の記述は\"年/月/日\"の形で入力してください。',
+					'2'=>'支出,収入欄に数字ではないものが含まれています。',
+					'3'=>'日付をyear/month/dayのように記述してください。',
+					'4'=>'支出,収入欄に負の値が入っています。',
 					);
 	//今日の日付を取得
 	$today = date('Y/m/d');
 	
-	function input_check($newday,$newmoney){
+	function input_check($newday,$newpay,$newearn){
 		//"/"の数を数える
 		if(substr_count($newday,"/") != 2){
 			return 1;
@@ -38,8 +42,12 @@
 			list($year,$month,$day)=explode("/",$newday);
 			
 			//数字ではない場合
-			if(!is_numeric($newmoney)){
+			if(!is_numeric($newpay)||!is_numeric($newearn)){
 				return 2;
+			}else{
+				if($newpay<0&&$newearn<0){
+					return 4;
+				}
 			}
 			//ちゃんとした日付でない場合
 			if(!checkdate($month,$day,$year)){
@@ -58,7 +66,8 @@
 				echo "<td align~'center'><input type='checkbox' name='check[{$id_no}]' checked></td>";
 				echo "<td align='right'>".$row['no']."</td>\n";
 				echo "<td align='right'><input type='text' size='10' name='update_day[{$id_no}]' value=".$row['date']."></td>\n";
-				echo "<td align='right'><input type='text' size='2' name='update_money[{$id_no}]' value=".$row['money'].">円</td>\n";
+				echo "<td align='right'><input type='text' size='2' name='update_pay[{$id_no}]' value=".$row['pay'].">円</td>\n";
+				echo "<td align='right'><input type='text' size='2' name='update_earn[{$id_no}]' value=".$row['earn'].">円</td>\n";
 				echo "<td align='right'><input type='text' size='30' name='update_detail[{$id_no}]' value=".$row['detail']."></td>\n";
 				if($sort_flg==0){	//ソートされてないとき
 					echo "<td align='center'><input type='submit' value='決定' name='deside[{$id_no}]'></td>\n";
@@ -74,7 +83,8 @@
 			}
 			echo "<td align='right'>".$row['no']."</td>\n";
 			echo "<td align='right'>".$row['date']."</td>\n";
-			echo "<td align='right'>".$row['money']."円</td>\n";
+			echo "<td align='right'>".$row['pay']."円</td>\n";
+			echo "<td align='right'>".$row['earn']."円</td>\n";
 			echo "<td align='right'>".$row['detail']."</td>\n";
 			if($sort_flg==0){
 				echo "<td align='center'><input type='submit' value='変更' name='change[{$id_no}]'></td>\n";
@@ -89,7 +99,8 @@
 	if($_SERVER["REQUEST_METHOD"]=="POST"){
 		if(isset($_POST["submit"])){
 			//値の取得
-			$used_money = htmlspecialchars($_POST["used_money"]);
+			$used_pay = htmlspecialchars($_POST["used_pay"]);
+			$used_earn = htmlspecialchars($_POST["used_earn"]);
 			$used_detail = htmlspecialchars($_POST["used_detail"]);
 			$used_day = htmlspecialchars($_POST["used_day"]);
 			//最大値番号を取得
@@ -97,15 +108,16 @@
 			$result = mysql_query($sql,$conn) or die(mysql_error());
 			$row = mysql_fetch_array($result);
 			//半角英数字に変換
-			$used_money = mb_convert_kana($used_money,"as");
+			$used_pay = mb_convert_kana($used_pay,"as");
+			$used_earn = mb_convert_kana($used_earn,"as");
 			$used_day = mb_convert_kana($used_day,"as");
 			//エラーの場所の番号
-			$error_no=input_check($used_day,$used_money);
+			$error_no=input_check($used_day,$used_pay,$used_earn);
 			//データベースに書き込み（何もエラーがない場合）
 			if($error_no==0){
 				$no = $row["maxno"]+1;
 				$sql = "INSERT INTO account ";
-				$sql .= "VALUE('{$no}','{$used_day}','{$used_money}','{$used_detail}')";
+				$sql .= "VALUE('{$no}','{$used_day}','{$used_pay}','{$used_earn}','{$used_detail}')";
 				$result = mysql_query($sql,$conn) or die(mysql_error());
 				if($result){
 					echo "書き込み成功";
@@ -121,15 +133,17 @@
 		if(isset($_POST["deside"])){		
 			$update_no = key($_POST["deside"]);		//更新の場所を取得
 			$update_day = htmlspecialchars($_POST["update_day"][$update_no]);
-			$update_money = htmlspecialchars($_POST["update_money"][$update_no]);
+			$update_pay = htmlspecialchars($_POST["update_pay"][$update_no]);
+			$update_earn = htmlspecialchars($_POST["update_earn"][$update_no]);
 			$update_detail = htmlspecialchars($_POST["update_detail"][$update_no]);
 			//半角英数字に変換
-			$update_money = mb_convert_kana($update_money,"as");
+			$update_pay = mb_convert_kana($update_pay,"as");
+			$update_earn = mb_convert_kana($update_earn,"as");
 			$update_day = mb_convert_kana($update_day,"as");
 			//エラーの場所の番号
-			$error_no = input_check($update_day,$update_money);
+			$error_no = input_check($update_day,$update_pay,$update_earn);
 			if($error_no==0){
-				$sql = "UPDATE account SET date='{$update_day}' , money='{$update_money}' , detail='{$update_detail}' WHERE no='{$update_no}'";
+				$sql = "UPDATE account SET date='{$update_day}' , pay='{$update_pay}' , earn='{$update_earn}' , detail='{$update_detail}' WHERE no='{$update_no}'";
 				$result = mysql_query($sql,$conn) or die(mysql_error());
 				if($result){
 					echo "更新成功";
@@ -183,15 +197,17 @@
 					取得することが出来る。
 					*/
 					$update_day = htmlspecialchars($_POST["update_day"][$key]);
-					$update_money = htmlspecialchars($_POST["update_money"][$key]);
+					$update_pay = htmlspecialchars($_POST["update_pay"][$key]);
+					$update_earn = htmlspecialchars($_POST["update_earn"][$key]);
 					$update_detail = htmlspecialchars($_POST["update_detail"][$key]);
 					//半角英数字に変換
-					$update_money = mb_convert_kana($update_money,"as");
+					$update_pay = mb_convert_kana($update_pay,"as");
+					$update_earn = mb_convert_kana($update_earn,"as");
 					$update_day = mb_convert_kana($update_day,"as");
 					//エラーの場所の番号
-					$error_no = input_check($update_day,$update_money);
+					$error_no = input_check($update_day,$update_pay,$update_earn);
 					if($error_no==0){
-						$sql = "UPDATE account SET date='{$update_day}' , money='{$update_money}' , detail='{$update_detail}' WHERE no='{$key}'";
+						$sql = "UPDATE account SET date='{$update_day}' , pay='{$update_pay}' , earn='{$update_earn}' , detail='{$update_detail}' WHERE no='{$key}'";
 						$result = mysql_query($sql,$conn) or die(mysql_error());
 						if($result){
 							echo $key." : 更新成功<br>";
@@ -232,7 +248,8 @@
 		if($sort_flg==0){
 	?>
 		日付<input type="text" name="used_day" value="<?=$today?>" size="15">&nbsp;
-		金額<input type="text" name="used_money" value="" size="8">円&nbsp;
+		支出<input type="text" name="used_pay" value="0" size="8">円&nbsp;
+		収入<input type="text" name="used_earn" value="0" size="8">円&nbsp;
 		内容<input type="text" name="used_detail" value="" size="30">&nbsp;
 		<input type="submit" name="submit" value="入力"><br>
 		
@@ -260,7 +277,7 @@
 				if($sort_flg==0){		//ソートされてない場合
 					echo "<th>✔</th>";
 				}
-				echo "<th>No</th><th>日付</th><th>金額</th><th>詳細</th>";
+				echo "<th>No</th><th>日付</th><th>支出</th><th>収入</th><th>詳細</th>";
 				if($sort_flg==0){
 					echo "<th colspan='2'></th>";
 				}
@@ -268,21 +285,27 @@
 				while($row = mysql_fetch_array($result)){		//mysqli_fetch_assoc($result)でも書ける
 					show($row,$id_no,$change_check,$sort_flg,$ischeck);		//表示する関数show
 				}
-				//総額をはじき出す
+				//支出と収入の総額をはじき出す
 				if($sort_flg==0){	//ソートされていないとき
-					$sql = "SELECT SUM(money) AS sum_money FROM account";
+					$pay_sql = "SELECT SUM(pay) AS sum_pay FROM account";
+					$earn_sql = "SELECT SUM(earn) AS sum_earn FROM account";
 				}else{	//ソートされた時
-					$sql = "SELECT SUM(money) AS sum_money FROM account WHERE date >= '{$now_month}' AND date < '{$last_month}'";
+					$pay_sql = "SELECT SUM(pay) AS sum_pay FROM account WHERE date >= '{$now_month}' AND date < '{$last_month}'";
+					$earn_sql = "SELECT SUM(earn) AS sum_earn FROM account WHERE date >= '{$now_month}' AND date < '{$last_month}'";
 				}
-				$result = mysql_query($sql,$conn) or die(mysql_error());
-				$row = mysql_fetch_array($result);
-				$sum_money = $row["sum_money"];
-				if($sort_flg==0){
+				$pay_result = mysql_query($pay_sql,$conn) or die(mysql_error());
+				$earn_result = mysql_query($earn_sql,$conn) or die(mysql_error());
+				$pay_row = mysql_fetch_array($pay_result);
+				$earn_row = mysql_fetch_array($earn_result);
+				$sum_pay = $pay_row["sum_pay"];
+				$sum_earn = $earn_row["sum_earn"];
+				if($sort_flg==0){	//ソートされてない場合
 					echo "<tr><td colspan='3' align='center'>総額</td>";
 				}else{
 					echo "<tr><td colspan='2' align='center'>総額</td>";
 				}
-				echo "<td colspan='1' align='right'>{$sum_money}円</td><td colspan='1'>&nbsp;</td>";
+				$sum_pay_earn = $sum_earn-$sum_pay;
+				echo "<td colspan='1' align='right'>{$sum_pay}円</td><td align='right'>{$sum_earn}円</td><td>&nbsp;</td>";
 				if($sort_flg==0){	//ソートされてない場合
 					if($ischeck==1){		//一括変更された場合
 						echo "<td align='center'><input type='submit' name='deside_check' value='一括決定'></td>";
@@ -292,9 +315,17 @@
 					echo "<td align='center'><input type='submit' name='delete_check' value='一括削除'></td>";
 				}
 				echo "</tr>";
+				echo "<tr>";
+				if($sort_flg==0){	//ソートされてない場合
+					echo "<td align='center' colspan='3'>収入-支出</td>";
+				}else{
+					echo "<td align='center' colspan='2'>収入-支出</td>";
+				}
+				echo "<td align='right' colspan='2'>{$sum_pay_earn}円</td><td colspan='3'></td>";
+				echo "</tr>";
 				echo "</table>\n<br>";
 			}
-			echo "<br clear='all'>";
+			echo "<br clear='all'>";	//回り込みを解除
 			if($sort_flg==1){
 				echo "<input type='submit' value='ソート解除' name='unsort'>";
 			}else{
