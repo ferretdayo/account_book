@@ -267,8 +267,12 @@
 			}
 			//$result = mysqli_query($link,$sql) or die(mysql_error());でも可
 			$result = mysql_query($sql,$conn) or die(mysql_error());
-			if(!mysql_fetch_array($result)&&$sort_flg==1){	//ソートした際、何もなかった場合
-				echo "<br>該当するものはありませんでした。ʅ(｡◔‸◔｡)ʃ<br>";
+			if(!mysql_fetch_array($result)){
+				if($sort_flg==1){	//ソートした際、何もなかった場合
+					echo "<br>該当するものはありませんでした。ʅ(｡◔‸◔｡)ʃ<br>";
+				}else{
+					echo "<br>何もありません<br>";
+				}
 			}else{
 				$result = mysql_query($sql,$conn) or die(mysql_error());	//一回mysql_fetch_arrayで呼び出したため、1行目なくなるので、もう一度定義
 				echo "<br>";
