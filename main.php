@@ -1,15 +1,10 @@
 <?php
-	/*
-	一括更新
-	一括削除
-	まだ未実装
-	*/
 	//DB処理
 	//接続設定
-	$sv = "";
-	$dbname = "";
-	$user = "";
-	$pass = "";
+	$sv = "localhost";
+	$dbname = "accountbook";
+	$user = "ferret";
+	$pass = "firstaccountbook";
 	//DBに接続する
 	$link = mysqli_connect($sv,$user,$pass,$dbname);
 	$conn = mysql_connect($sv,$user,$pass) or die(mysql_error());
@@ -24,8 +19,8 @@
 	$row = 0;
 	$error_no = 0;
 	$sort_flg = 0;
-	$change_array = array();
-	$ischeck=0;
+	$change_check = array();
+	$ischeck = 0;
 	$error = array	(
 					'1'=>"日付の記述は\"年/月/日\"の形で入力してください。",
 					'2'=>"金額欄に数字ではないものが含まれています。",
@@ -54,18 +49,17 @@
 		return 0;
 	}
 	
-	function show($row,$id_no,$change_array,$sort_flg,&$ischeck/*参照渡し*/){
+	function show($row,$id_no,$change_check,$sort_flg,&$ischeck/*参照渡し*/){
 		$flg = 0;
 		$id_no = $row['no'];
-		var_dump($change_array);
-		foreach($change_array as $value){
-			if($value==$id_no){										//変更ボタン押されたところだけ
+		foreach($change_check as $key => $value){
+			if($key==$id_no){										//変更ボタン押されたところだけ
 				echo "<tr>";
-				echo "<td>&nbsp;</td>";
+				echo "<td align~'center'><input type='checkbox' name='check[{$id_no}]' checked></td>";
 				echo "<td align='right'>".$row['no']."</td>\n";
-				echo "<td align='right'><input type='text' size='10' name='update_day' value=".$row['date']."></td>\n";
-				echo "<td align='right'><input type='text' size='2' name='update_money' value=".$row['money'].">円</td>\n";
-				echo "<td align='right'><input type='text' size='30' name='update_detail' value=".$row['detail']."></td>\n";
+				echo "<td align='right'><input type='text' size='10' name='update_day[{$id_no}]' value=".$row['date']."></td>\n";
+				echo "<td align='right'><input type='text' size='2' name='update_money[{$id_no}]' value=".$row['money'].">円</td>\n";
+				echo "<td align='right'><input type='text' size='30' name='update_detail[{$id_no}]' value=".$row['detail']."></td>\n";
 				if($sort_flg==0){	//ソートされてないとき
 					echo "<td align='center'><input type='submit' value='決定' name='deside[{$id_no}]'></td>\n";
 				}
@@ -76,7 +70,7 @@
 		if($flg == 0){					//変更ボタン押されてないところ
 			echo "<tr>";
 			if($sort_flg==0){
-				echo "<td align='right'><input type='checkbox' name='check[{$id_no}]'></td>";
+				echo "<td align='center'><input type='checkbox' name='check[{$id_no}]'></td>";
 			}
 			echo "<td align='right'>".$row['no']."</td>\n";
 			echo "<td align='right'>".$row['date']."</td>\n";
@@ -118,16 +112,17 @@
 				}
 			}	
 		}
+		//変更ボタン押された場合
 		if(isset($_POST["change"])){
 			//変更の場合の場所
-			$change_array[0] = key($_POST["change"]);
+			$change_check = $_POST["change"];
 		}
-		if(isset($_POST["deside"])){
-			//決定が押された場合
+		//決定が押された場合
+		if(isset($_POST["deside"])){		
 			$update_no = key($_POST["deside"]);		//更新の場所を取得
-			$update_day = htmlspecialchars($_POST["update_day"]);
-			$update_money = htmlspecialchars($_POST["update_money"]);
-			$update_detail = htmlspecialchars($_POST["update_detail"]);
+			$update_day = htmlspecialchars($_POST["update_day"][$update_no]);
+			$update_money = htmlspecialchars($_POST["update_money"][$update_no]);
+			$update_detail = htmlspecialchars($_POST["update_detail"][$update_no]);
 			//半角英数字に変換
 			$update_money = mb_convert_kana($update_money,"as");
 			$update_day = mb_convert_kana($update_day,"as");
@@ -144,11 +139,10 @@
 		if(isset($_POST["delete"])){
 			//削除の場合のDBの処理
 			$delete_no = key($_POST["delete"]);		//削除する場所を取得
-			echo $delete_no;
 			$sql = "DELETE FROM account WHERE no='{$delete_no}'";
 			$result = mysql_query($sql,$conn) or die(mysql_error());
 			if($result){
-				echo "削除成功";
+				echo $delete_no." : 削除成功";
 			}
 		}
 		
@@ -177,8 +171,45 @@
 		if(isset($_POST["change_check"])){
 			if(isset($_POST["check"])){
 				$change_check=$_POST["check"];
-				foreach($change_check as $key => $value){
-					array_push($change_array,$key);
+			}
+		}
+		//一括決定ボタン押した場合
+		if(isset($_POST["deside_check"])){
+			if(isset($_POST["check"])){
+				$deside_check = $_POST["check"];
+				foreach($deside_check as $key => $value){
+					/*
+					✔された場所($key)を$_POST[HTMLのname][$key]で
+					取得することが出来る。
+					*/
+					$update_day = htmlspecialchars($_POST["update_day"][$key]);
+					$update_money = htmlspecialchars($_POST["update_money"][$key]);
+					$update_detail = htmlspecialchars($_POST["update_detail"][$key]);
+					//半角英数字に変換
+					$update_money = mb_convert_kana($update_money,"as");
+					$update_day = mb_convert_kana($update_day,"as");
+					//エラーの場所の番号
+					$error_no = input_check($update_day,$update_money);
+					if($error_no==0){
+						$sql = "UPDATE account SET date='{$update_day}' , money='{$update_money}' , detail='{$update_detail}' WHERE no='{$key}'";
+						$result = mysql_query($sql,$conn) or die(mysql_error());
+						if($result){
+							echo $key." : 更新成功<br>";
+						}
+					}
+				}
+			}
+		}
+		//一括削除ボタンを押された場合
+		if(isset($_POST["delete_check"])){
+			if(isset($_POST["check"])){
+				$delete_check = $_POST["check"];
+				foreach($delete_check as $key => $value){
+					$sql = "DELETE FROM account WHERE no='{$key}'";
+					$result = mysql_query($sql,$conn) or die(mysql_error());
+					if($result){
+						echo $key." : 削除成功<br>";
+					}
 				}
 			}
 		}
@@ -235,7 +266,7 @@
 				}
 				//DBの中身を表示
 				while($row = mysql_fetch_array($result)){		//mysqli_fetch_assoc($result)でも書ける
-					show($row,$id_no,$change_array,$sort_flg,$ischeck);		//表示する関数show
+					show($row,$id_no,$change_check,$sort_flg,$ischeck);		//表示する関数show
 				}
 				//総額をはじき出す
 				if($sort_flg==0){	//ソートされていないとき
@@ -246,7 +277,11 @@
 				$result = mysql_query($sql,$conn) or die(mysql_error());
 				$row = mysql_fetch_array($result);
 				$sum_money = $row["sum_money"];
-				echo "<tr><td colspan='3' align='center'>総額</td>";
+				if($sort_flg==0){
+					echo "<tr><td colspan='3' align='center'>総額</td>";
+				}else{
+					echo "<tr><td colspan='2' align='center'>総額</td>";
+				}
 				echo "<td colspan='1' align='right'>{$sum_money}円</td><td colspan='1'>&nbsp;</td>";
 				if($sort_flg==0){	//ソートされてない場合
 					if($ischeck==1){		//一括変更された場合
