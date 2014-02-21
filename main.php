@@ -6,7 +6,7 @@
 	$user = "";
 	$pass = "";
 	//DBに接続する
-	$link = mysqli_connect($sv,$user,$pass,$dbname);
+	//$link = mysqli_connect($sv,$user,$pass,$dbname);
 	$conn = mysql_connect($sv,$user,$pass) or die(mysql_error());
 	mysql_select_db($dbname) or die(mysql_error());
 	
@@ -61,15 +61,15 @@
 		$flg = 0;
 		$id_no = $row['no'];
 		foreach($change_check as $key => $value){
-			if($key==$id_no){										//変更ボタン押されたところだけ
+			if($key == $id_no){										//変更ボタン押されたところだけ
 				echo "<tr>";
-				echo "<td align~'center'><input type='checkbox' name='check[{$id_no}]' checked></td>";
+				echo "<td align='center'><input type='checkbox' name='check[{$id_no}]' checked></td>";
 				echo "<td align='right'>".$row['no']."</td>\n";
 				echo "<td align='right'><input type='text' size='10' name='update_day[{$id_no}]' value=".$row['date']."></td>\n";
 				echo "<td align='right'><input type='text' size='2' name='update_pay[{$id_no}]' value=".$row['pay'].">円</td>\n";
 				echo "<td align='right'><input type='text' size='2' name='update_earn[{$id_no}]' value=".$row['earn'].">円</td>\n";
 				echo "<td align='right'><input type='text' size='30' name='update_detail[{$id_no}]' value=".$row['detail']."></td>\n";
-				if($sort_flg==0){	//ソートされてないとき
+				if($sort_flg == 0){	//ソートされてないとき
 					echo "<td align='center'><input type='submit' value='決定' name='deside[{$id_no}]'></td>\n";
 				}
 				$flg = 1;
@@ -78,7 +78,7 @@
 		}
 		if($flg == 0){					//変更ボタン押されてないところ
 			echo "<tr>";
-			if($sort_flg==0){
+			if($sort_flg == 0){
 				echo "<td align='center'><input type='checkbox' name='check[{$id_no}]'></td>";
 			}
 			echo "<td align='right'>".$row['no']."</td>\n";
@@ -86,17 +86,17 @@
 			echo "<td align='right'>".$row['pay']."円</td>\n";
 			echo "<td align='right'>".$row['earn']."円</td>\n";
 			echo "<td align='right'>".$row['detail']."</td>\n";
-			if($sort_flg==0){
+			if($sort_flg == 0){
 				echo "<td align='center'><input type='submit' value='変更' name='change[{$id_no}]'></td>\n";
 			}
 		}
-		if($sort_flg==0){	//ソートされていないとき
+		if($sort_flg == 0){	//ソートされていないとき
 			echo "<td align='center'><input type='submit' value='削除' name='delete[{$id_no}]'></td>\n";
 		}
 		echo "</tr>\n";
 	}
 
-	if($_SERVER["REQUEST_METHOD"]=="POST"){
+	if($_SERVER["REQUEST_METHOD"] == "POST"){
 		if(isset($_POST["submit"])){
 			//値の取得
 			$used_pay = htmlspecialchars($_POST["used_pay"]);
@@ -114,7 +114,7 @@
 			//エラーの場所の番号
 			$error_no=input_check($used_day,$used_pay,$used_earn);
 			//データベースに書き込み（何もエラーがない場合）
-			if($error_no==0){
+			if($error_no == 0){
 				$no = $row["maxno"]+1;
 				$sql = "INSERT INTO account ";
 				$sql .= "VALUE('{$no}','{$used_day}','{$used_pay}','{$used_earn}','{$used_detail}')";
@@ -142,7 +142,7 @@
 			$update_day = mb_convert_kana($update_day,"as");
 			//エラーの場所の番号
 			$error_no = input_check($update_day,$update_pay,$update_earn);
-			if($error_no==0){
+			if($error_no == 0){
 				$sql = "UPDATE account SET date='{$update_day}' , pay='{$update_pay}' , earn='{$update_earn}' , detail='{$update_detail}' WHERE no='{$update_no}'";
 				$result = mysql_query($sql,$conn) or die(mysql_error());
 				if($result){
@@ -206,7 +206,7 @@
 					$update_day = mb_convert_kana($update_day,"as");
 					//エラーの場所の番号
 					$error_no = input_check($update_day,$update_pay,$update_earn);
-					if($error_no==0){
+					if($error_no == 0){
 						$sql = "UPDATE account SET date='{$update_day}' , pay='{$update_pay}' , earn='{$update_earn}' , detail='{$update_detail}' WHERE no='{$key}'";
 						$result = mysql_query($sql,$conn) or die(mysql_error());
 						if($result){
@@ -237,11 +237,11 @@
 <head>
 <meta http-equiv="Content-type" content="text/html; charset=utf-8">
 <title>家計簿orおこづかい帳</title>
-
+<link href="home.css" rel="stylesheet" type="text/css">
 </head>
 <body>
 
-<h1>簡易家計簿</h1>
+<p class="h">簡易家計簿</p>
 
 	<form name="myform" action="" method="POST" enctype="multipart/form-data">
 	<?php 
@@ -256,11 +256,11 @@
 		<?php
 			}
 			//エラーあった場合の表示
-			if($error_no!=0){
+			if($error_no != 0){
 				echo $error[$error_no]."<br>";
 			}
 			//クエリ
-			if($sort_flg==1){	//ソート時
+			if($sort_flg == 1){	//ソート時
 				$sql = "SELECT * FROM account WHERE date >= '{$now_month}' AND date < '{$last_month}' ORDER BY no DESC";
 			}else{
 				$sql = "SELECT * FROM account ORDER BY no DESC";
@@ -268,7 +268,7 @@
 			//$result = mysqli_query($link,$sql) or die(mysql_error());でも可
 			$result = mysql_query($sql,$conn) or die(mysql_error());
 			if(!mysql_fetch_array($result)){
-				if($sort_flg==1){	//ソートした際、何もなかった場合
+				if($sort_flg == 1){	//ソートした際、何もなかった場合
 					echo "<br>該当するものはありませんでした。ʅ(｡◔‸◔｡)ʃ<br>";
 				}else{
 					echo "<br>何もありません<br>";
@@ -278,11 +278,11 @@
 				echo "<br>";
 				echo "<table border='1' bgcolor='#FFFFFF' align='left' width='700'>\n";
 				echo "<thead><tr>";
-				if($sort_flg==0){		//ソートされてない場合
+				if($sort_flg == 0){		//ソートされてない場合
 					echo "<th>✔</th>";
 				}
 				echo "<th>No</th><th>日付</th><th>支出</th><th>収入</th><th>詳細</th>";
-				if($sort_flg==0){
+				if($sort_flg == 0){
 					echo "<th colspan='2'></th>";
 				}
 				//DBの中身を表示
@@ -290,7 +290,7 @@
 					show($row,$id_no,$change_check,$sort_flg,$ischeck);		//表示する関数show
 				}
 				//支出と収入の総額をはじき出す
-				if($sort_flg==0){	//ソートされていないとき
+				if($sort_flg == 0){	//ソートされていないとき
 					$pay_sql = "SELECT SUM(pay) AS sum_pay FROM account";
 					$earn_sql = "SELECT SUM(earn) AS sum_earn FROM account";
 				}else{	//ソートされた時
@@ -303,15 +303,15 @@
 				$earn_row = mysql_fetch_array($earn_result);
 				$sum_pay = $pay_row["sum_pay"];
 				$sum_earn = $earn_row["sum_earn"];
-				if($sort_flg==0){	//ソートされてない場合
+				if($sort_flg == 0){	//ソートされてない場合
 					echo "<tr><td colspan='3' align='center'>総額</td>";
 				}else{
 					echo "<tr><td colspan='2' align='center'>総額</td>";
 				}
 				$sum_pay_earn = $sum_earn-$sum_pay;
 				echo "<td colspan='1' align='right'>{$sum_pay}円</td><td align='right'>{$sum_earn}円</td><td>&nbsp;</td>";
-				if($sort_flg==0){	//ソートされてない場合
-					if($ischeck==1){		//一括変更された場合
+				if($sort_flg == 0){	//ソートされてない場合
+					if($ischeck == 1){		//一括変更された場合
 						echo "<td align='center'><input type='submit' name='deside_check' value='一括決定'></td>";
 					}else{
 						echo "<td align='center'><input type='submit' name='change_check' value='一括変更'></td>";
@@ -320,7 +320,7 @@
 				}
 				echo "</tr>";
 				echo "<tr>";
-				if($sort_flg==0){	//ソートされてない場合
+				if($sort_flg == 0){	//ソートされてない場合
 					echo "<td align='center' colspan='3'>収入-支出</td>";
 				}else{
 					echo "<td align='center' colspan='2'>収入-支出</td>";
@@ -330,7 +330,7 @@
 				echo "</table>\n<br>";
 			}
 			echo "<br clear='all'>";	//回り込みを解除
-			if($sort_flg==1){
+			if($sort_flg == 1){
 				echo "<input type='submit' value='ソート解除' name='unsort'>";
 			}else{
 				echo "月のソート : <input type='month' name='month'>&nbsp;";
