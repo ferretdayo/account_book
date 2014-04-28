@@ -1,10 +1,10 @@
 <?php
 	//DB処理
 	//接続設定
-	$sv = "";
-	$dbname = "";
-	$user = "";
-	$pass = "";
+	$sv = "localhost";
+	$dbname = "accountbook";
+	$user = "ferret";
+	$pass = "firstaccountbook";
 	//DBに接続する
 	//$link = mysqli_connect($sv,$user,$pass,$dbname);
 	$conn = mysql_connect($sv,$user,$pass) or die(mysql_error());
@@ -24,6 +24,10 @@
 	$sql = "";
 	$pay_sql = "";
 	$earn_sql = "";
+	$data_list = array();
+	$now_page = 1;
+	$max_page = 0;
+	$min_page = 1;
 	$error = array	(
 					'1'=>'日付の記述は\"年/月/日\"の形で入力してください。',
 					'2'=>'支出,収入欄に数字ではないものが含まれています。',
@@ -32,7 +36,21 @@
 					);
 	//今日の日付を取得
 	$today = date('Y/m/d');
-	
+	//表示する関数（1~10件11~20と
+	function show($data_list,$i,$sort_flg){
+		foreach($data_list as $key => $value){
+			if($sort_flg == 0){
+				if(($key <= 10*$i)&&($key >= 11*(1-$i))){
+					echo $value;
+				}//else if($key >= 10*$i){
+				//	return 0;
+				//}
+			}else{
+				echo $value;
+			}
+		}
+	}
+				
 	function input_check($newday,$newpay,$newearn){
 		//"/"の数を数える
 		if(substr_count($newday,"/") != 2){
@@ -57,43 +75,45 @@
 		return 0;
 	}
 	
-	function show($row,$id_no,$change_check,$sort_flg,&$ischeck/*参照渡し*/){
+	function input_show($row,$id_no,$change_check,$sort_flg,&$ischeck/*参照渡し*/,&$data_list){
 		$flg = 0;
 		$id_no = $row['no'];
+		$account_list = "";
 		foreach($change_check as $key => $value){
 			if($key == $id_no){										//変更ボタン押されたところだけ
-				echo "<tr>";
-				echo "<td align='center'><input type='checkbox' name='check[{$id_no}]' checked></td>";
-				echo "<td align='right'>".$row['no']."</td>\n";
-				echo "<td align='right'><input type='text' size='10' name='update_day[{$id_no}]' value=".$row['date']."></td>\n";
-				echo "<td align='right'><input type='text' size='2' name='update_pay[{$id_no}]' value=".$row['pay'].">円</td>\n";
-				echo "<td align='right'><input type='text' size='2' name='update_earn[{$id_no}]' value=".$row['earn'].">円</td>\n";
-				echo "<td align='right'><input type='text' size='30' name='update_detail[{$id_no}]' value=".$row['detail']."></td>\n";
+				$account_list = "<tr>";
+				$account_list .= "<td align='center'><input type='checkbox' name='check[{$id_no}]' checked></td>";
+				$account_list .= "<td align='right'>".$row['no']."</td>\n";
+				$account_list .= "<td align='right'><input type='text' size='10' name='update_day[{$id_no}]' value=".$row['date']."></td>\n";
+				$account_list .= "<td align='right'><input type='text' size='2' name='update_pay[{$id_no}]' value=".$row['pay'].">円</td>\n";
+				$account_list .= "<td align='right'><input type='text' size='2' name='update_earn[{$id_no}]' value=".$row['earn'].">円</td>\n";
+				$account_list .= "<td align='right'><input type='text' size='30' name='update_detail[{$id_no}]' value=".$row['detail']."></td>\n";
 				if($sort_flg == 0){	//ソートされてないとき
-					echo "<td align='center'><input type='submit' value='決定' name='deside[{$id_no}]'></td>\n";
+					$account_list .= "<td align='center'><input type='submit' value='決定' name='deside[{$id_no}]'></td>\n";
 				}
 				$flg = 1;
 				$ischeck = 1;
 			}
 		}
 		if($flg == 0){					//変更ボタン押されてないところ
-			echo "<tr>";
+			$account_list .= "<tr>";
 			if($sort_flg == 0){
-				echo "<td align='center'><input type='checkbox' name='check[{$id_no}]'></td>";
+				$account_list .= "<td align='center'><input type='checkbox' name='check[{$id_no}]'></td>";
 			}
-			echo "<td align='right'>".$row['no']."</td>\n";
-			echo "<td align='right'>".$row['date']."</td>\n";
-			echo "<td align='right'>".$row['pay']."円</td>\n";
-			echo "<td align='right'>".$row['earn']."円</td>\n";
-			echo "<td align='right'>".$row['detail']."</td>\n";
+			$account_list .= "<td align='right'>".$row['no']."</td>\n";
+			$account_list .= "<td align='right'>".$row['date']."</td>\n";
+			$account_list .= "<td align='right'>".$row['pay']."円</td>\n";
+			$account_list .= "<td align='right'>".$row['earn']."円</td>\n";
+			$account_list .= "<td align='right'>".$row['detail']."</td>\n";
 			if($sort_flg == 0){
-				echo "<td align='center'><input type='submit' value='変更' name='change[{$id_no}]'></td>\n";
+				$account_list .= "<td align='center'><input type='submit' value='変更' name='change[{$id_no}]'></td>\n";
 			}
 		}
 		if($sort_flg == 0){	//ソートされていないとき
-			echo "<td align='center'><input type='submit' value='削除' name='delete[{$id_no}]'></td>\n";
+			$account_list .= "<td align='center'><input type='submit' value='削除' name='delete[{$id_no}]'></td>\n";
 		}
-		echo "</tr>\n";
+		$account_list .= "</tr>\n";
+		array_push($data_list,$account_list);
 	}
 
 	if($_SERVER["REQUEST_METHOD"] == "POST"){
@@ -230,6 +250,16 @@
 			}
 		}
 	}
+	//次へのボタンを押された場合
+	if(isset($_GET['next'])){
+		echo "next";
+		$now_page = $_GET['next'] + 1;
+	}
+	//前へのボタンが押された場合
+	if(isset($_GET['privious'])){
+		echo "privious";
+		$now_page = $_GET['privious'] - 1;
+	}
 
 ?>
 
@@ -259,6 +289,15 @@
 			if($error_no != 0){
 				echo $error[$error_no]."<br>";
 			}
+			//最大数を取得
+			$sql = "SELECT MAX(no) AS maxno FROM account";
+			$result = mysql_query($sql,$conn) or die(mysql_error());
+			$row = mysql_fetch_array($result);
+			if($error_no == 0){
+				$no = $row["maxno"];
+				$max_page = (int)($no / 10)+1;	//最大ページを取得
+				echo $max_page;
+			}
 			//クエリ
 			if($sort_flg == 1){	//ソート時
 				$sql = "SELECT * FROM account WHERE date >= '{$now_month}' AND date < '{$last_month}' ORDER BY no DESC";
@@ -285,10 +324,12 @@
 				if($sort_flg == 0){
 					echo "<th colspan='2'></th>";
 				}
-				//DBの中身を表示
+				//DBの中身を代入
 				while($row = mysql_fetch_array($result)){		//mysqli_fetch_assoc($result)でも書ける
-					show($row,$id_no,$change_check,$sort_flg,$ischeck);		//表示する関数show
+					input_show($row,$id_no,$change_check,$sort_flg,$ischeck,$data_list);		//表示する内容を配列に代入する関数input_show
 				}
+				//DBの内容を表示
+				show($data_list,$now_page,$sort_flg);
 				//支出と収入の総額をはじき出す
 				if($sort_flg == 0){	//ソートされていないとき
 					$pay_sql = "SELECT SUM(pay) AS sum_pay FROM account";
@@ -337,8 +378,27 @@
 				echo "<input type='submit' value='ソートする' name='sort'>";
 			}
 		?>
-  
 	</form>
-
+	<table>
+		<form method='GET' action='' enctype="multipart/form-data">
+		<?php
+			if($sort_flg == 0){
+				if($max_page != $now_page){
+					echo "<input type='hidden' name='next' value='$now_page'>";
+					echo "<input type='submit' value='次へ'>";
+				}
+				?>
+		</form>
+		<form method='GET' action='' enctype="multipart/form-data">
+				<?
+				if($min_page != $now_page){
+					echo "<input type='hidden' name='privious' value='$now_page'>";
+					echo "<input type='submit' value='前へ'>";
+				}
+			}
+		?>
+  
+		</form>
+	</table>
 </body>
 </html>
