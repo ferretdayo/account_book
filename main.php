@@ -326,7 +326,8 @@
 				}
 				//DBの中身を代入
 				while($row = mysql_fetch_array($result)){		//mysqli_fetch_assoc($result)でも書ける
-					input_show($row,$id_no,$change_check,$sort_flg,$ischeck,$data_list);		//表示する内容を配列に代入する関数input_show
+					//表示する内容を配列に代入する関数input_show
+					input_show($row,$id_no,$change_check,$sort_flg,$ischeck,$data_list);
 				}
 				//DBの内容を表示
 				show($data_list,$now_page,$sort_flg);
@@ -338,10 +339,13 @@
 					$pay_sql = "SELECT SUM(pay) AS sum_pay FROM account WHERE date >= '{$now_month}' AND date < '{$last_month}'";
 					$earn_sql = "SELECT SUM(earn) AS sum_earn FROM account WHERE date >= '{$now_month}' AND date < '{$last_month}'";
 				}
+				//クエリの結果を代入
 				$pay_result = mysql_query($pay_sql,$conn) or die(mysql_error());
 				$earn_result = mysql_query($earn_sql,$conn) or die(mysql_error());
+				//返ってきた配列(一つだけの要素しか入っていない)
 				$pay_row = mysql_fetch_array($pay_result);
 				$earn_row = mysql_fetch_array($earn_result);
+				//要素の値を代入
 				$sum_pay = $pay_row["sum_pay"];
 				$sum_earn = $earn_row["sum_earn"];
 				if($sort_flg == 0){	//ソートされてない場合
@@ -383,7 +387,7 @@
 		<form method='GET' action='' enctype="multipart/form-data">
 		<?php
 			if($sort_flg == 0){
-				if($max_page != $now_page){
+				if($max_page != $now_page){	//次のページ
 					echo "<input type='hidden' name='next' value='$now_page'>";
 					echo "<input type='submit' value='次へ'>";
 				}
@@ -391,7 +395,7 @@
 		</form>
 		<form method='GET' action='' enctype="multipart/form-data">
 				<?
-				if($min_page != $now_page){
+				if($min_page != $now_page){	//前のページ
 					echo "<input type='hidden' name='privious' value='$now_page'>";
 					echo "<input type='submit' value='前へ'>";
 				}
