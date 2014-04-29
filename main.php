@@ -1,10 +1,10 @@
 <?php
 	//DB処理
 	//接続設定
-	$sv = "localhost";
-	$dbname = "accountbook";
-	$user = "ferret";
-	$pass = "firstaccountbook";
+	$sv = "";
+	$dbname = "";
+	$user = "";
+	$pass = "";
 	//DBに接続する
 	//$link = mysqli_connect($sv,$user,$pass,$dbname);
 	$conn = mysql_connect($sv,$user,$pass) or die(mysql_error());
