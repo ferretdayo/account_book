@@ -1,7 +1,6 @@
 <?php
 	//DB処理
 	//接続設定
-	
 	$sv = "";
 	$dbname = "";
 	$user = "";
@@ -149,23 +148,25 @@
 			$change_check = $_POST["change"];
 		}
 		//決定が押された場合
-		if(isset($_POST["deside"])){		
-			$update_no = key($_POST["deside"]);		//更新の場所を取得
-			$update_day = htmlspecialchars($_POST["update_day"][$update_no]);
-			$update_pay = htmlspecialchars($_POST["update_pay"][$update_no]);
-			$update_earn = htmlspecialchars($_POST["update_earn"][$update_no]);
-			$update_detail = htmlspecialchars($_POST["update_detail"][$update_no]);
-			//半角英数字に変換
-			$update_pay = mb_convert_kana($update_pay,"as");
-			$update_earn = mb_convert_kana($update_earn,"as");
-			$update_day = mb_convert_kana($update_day,"as");
-			//エラーの場所の番号
-			$error_no = input_check($update_day,$update_pay,$update_earn);
-			if($error_no == 0){
-				$sql = "UPDATE account SET date='{$update_day}' , pay='{$update_pay}' , earn='{$update_earn}' , detail='{$update_detail}' WHERE no='{$update_no}'";
-				$result = mysql_query($sql,$conn) or die(mysql_error());
-				if($result){
-					echo "更新成功";
+		if(isset($_POST["deside"])){
+			if(isset($_POST["check"])){
+				$update_no = key($_POST["deside"]);		//更新の場所を取得
+				$update_day = htmlspecialchars($_POST["update_day"][$update_no]);
+				$update_pay = htmlspecialchars($_POST["update_pay"][$update_no]);
+				$update_earn = htmlspecialchars($_POST["update_earn"][$update_no]);
+				$update_detail = htmlspecialchars($_POST["update_detail"][$update_no]);
+				//半角英数字に変換
+				$update_pay = mb_convert_kana($update_pay,"as");
+				$update_earn = mb_convert_kana($update_earn,"as");
+				$update_day = mb_convert_kana($update_day,"as");
+				//エラーの場所の番号
+				$error_no = input_check($update_day,$update_pay,$update_earn);
+				if($error_no == 0){
+					$sql = "UPDATE account SET date='{$update_day}' , pay='{$update_pay}' , earn='{$update_earn}' , detail='{$update_detail}' WHERE no='{$update_no}'";
+					$result = mysql_query($sql,$conn) or die(mysql_error());
+					if($result){
+						echo "更新成功";
+					}
 				}
 			}
 		}
