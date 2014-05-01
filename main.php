@@ -40,11 +40,9 @@
 	function show($data_list,$i,$sort_flg){
 		foreach($data_list as $key => $value){
 			if($sort_flg == 0){
-				if(($key <= 10*$i)&&($key >= 11*(1-$i))){
+				if(($key <= 10*$i)&&($key >= 11*($i-1))){
 					echo $value;
-				}//else if($key >= 10*$i){
-				//	return 0;
-				//}
+				}
 			}else{
 				echo $value;
 			}
@@ -252,12 +250,10 @@
 	}
 	//次へのボタンを押された場合
 	if(isset($_GET['next'])){
-		echo "next";
 		$now_page = $_GET['next'] + 1;
 	}
 	//前へのボタンが押された場合
 	if(isset($_GET['privious'])){
-		echo "privious";
 		$now_page = $_GET['privious'] - 1;
 	}
 
