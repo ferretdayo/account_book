@@ -270,7 +270,7 @@
 </head>
 <body>
 
-<p class="h">簡易家計簿</p>
+<h1 class="h">簡易家計簿</h1>
 
 	<form name="myform" action="" method="POST" enctype="multipart/form-data">
 	<?php 
@@ -353,14 +353,14 @@
 					echo "<tr><td colspan='2' align='center'>総額</td>";
 				}
 				$sum_pay_earn = $sum_earn-$sum_pay;
-				echo "<td colspan='1' align='right'>{$sum_pay}円</td><td align='right'>{$sum_earn}円</td><td>&nbsp;</td>";
+				echo "<td colspan='1' align='right'>{$sum_pay}円</td><td align='right'>{$sum_earn}円</td><td>&nbsp;</td>\n";
 				if($sort_flg == 0){	//ソートされてない場合
 					if($ischeck == 1){		//一括変更された場合
 						echo "<td align='center'><input type='submit' name='deside_check' value='一括決定'></td>";
 					}else{
 						echo "<td align='center'><input type='submit' name='change_check' value='一括変更'></td>";
 					}
-					echo "<td align='center'><input type='submit' name='delete_check' value='一括削除'></td>";
+					echo "<td align='center'><input type='submit' name='delete_check' value='一括削除'></td>\n";
 				}
 				echo "</tr>";
 				echo "<tr>";
