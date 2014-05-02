@@ -40,7 +40,8 @@
 	function show($data_list,$i,$sort_flg){
 		foreach($data_list as $key => $value){
 			if($sort_flg == 0){
-				if(($key <= 10*$i)&&($key >= 11*($i-1))){
+				//$keyは0からだから10件表示するには9までを表示する。
+				if(($key <= 9*$i)&&($key >= 10*($i-1))){
 					echo $value;
 				}
 			}else{
@@ -288,13 +289,13 @@
 				echo $error[$error_no]."<br>";
 			}
 			//最大数を取得
-			$sql = "SELECT MAX(no) AS maxno FROM account";
+			$sql = "SELECT COUNT(no) AS count FROM account";
 			$result = mysql_query($sql,$conn) or die(mysql_error());
 			$row = mysql_fetch_array($result);
 			if($error_no == 0){
-				$no = $row["maxno"];
-				$max_page = (int)($no / 10)+1;	//最大ページを取得
-				echo $max_page;
+				$no = $row["count"];
+				echo $no."<br>";
+				$max_page = ceil($no / 10);	//最大ページを取得,小数点以下を切り上げceil
 			}
 			//クエリ
 			if($sort_flg == 1){	//ソート時
