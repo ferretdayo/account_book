@@ -12,7 +12,7 @@ $pass にpassword<br>
 を入力してください。<br>
 
 tableは、<br>
-フィールド  種別          照合順序  NULL    デフォルト<br>
+フィールド  \t種別          照合順序  NULL    デフォルト<br>
 no          int(20)                 いいえ  1<br>
 date        varchar(20)   utf8      はい    NULL<br>
 pay         int(30)                 はい    NULL<br>
