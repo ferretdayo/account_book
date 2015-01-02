@@ -1,15 +1,15 @@
 <?php
 	//DB処理
 	//接続設定
-	$sv = "";
-	$dbname = "";
-	$user = "";
-	$pass = "";
+	$sv = "localhost";
+	$dbname = "accountbook";
+	$user = "ferret";
+	$pass = "ferret";
 	//DBに接続する
 	//$link = mysqli_connect($sv,$user,$pass,$dbname);
 	$conn = mysql_connect($sv,$user,$pass) or die(mysql_error());
 	mysql_select_db($dbname) or die(mysql_error());
-	
+	mysql_set_charset("utf-8", $conn);
 	//変更ボタンの作業での変数
 	$change_no = 0;
 	$id_no = 0;
@@ -121,6 +121,7 @@
 			$used_pay = htmlspecialchars($_POST["used_pay"]);
 			$used_earn = htmlspecialchars($_POST["used_earn"]);
 			$used_detail = htmlspecialchars($_POST["used_detail"]);
+			echo $used_detail;
 			$used_day = htmlspecialchars($_POST["used_day"]);
 			//最大値番号を取得
 			$sql = "SELECT MAX(no) AS maxno FROM account";
@@ -137,6 +138,7 @@
 				$no = $row["maxno"]+1;
 				$sql = "INSERT INTO account ";
 				$sql .= "VALUE('{$no}','{$used_day}','{$used_pay}','{$used_earn}','{$used_detail}')";
+				var_dump($sql);
 				$result = mysql_query($sql,$conn) or die(mysql_error());
 				if($result){
 					echo "書き込み成功";
@@ -150,7 +152,7 @@
 		}
 		//決定が押された場合
 		if(isset($_POST["deside"])){
-			if(isset($_POST["check"])){
+			if(isset($_POST["check"])){		//✔ボックスに✔されてる場合
 				$update_no = key($_POST["deside"]);		//更新の場所を取得
 				$update_day = htmlspecialchars($_POST["update_day"][$update_no]);
 				$update_pay = htmlspecialchars($_POST["update_pay"][$update_no]);
@@ -205,12 +207,12 @@
 		//一括変更ボタン押した場合
 		if(isset($_POST["change_check"])){
 			if(isset($_POST["check"])){
-				$change_check=$_POST["check"];
+				$change_check = $_POST["check"];
 			}
 		}
 		//一括決定ボタン押した場合
 		if(isset($_POST["deside_check"])){
-			if(isset($_POST["check"])){
+			if(isset($_POST["check"])){		//✔ボックスに✔されてる場合
 				$deside_check = $_POST["check"];
 				foreach($deside_check as $key => $value){
 					/*
@@ -271,8 +273,7 @@
 <body>
 
 <h1 class="h">簡易家計簿</h1>
-
-	<form name="myform" action="" method="POST" enctype="multipart/form-data">
+	<form name="myform" action="" method="POST" enctype="multipart/form-data" accept-charset="utf-8">
 	<?php 
 		if($sort_flg==0){
 	?>
@@ -393,7 +394,7 @@
 				?>
 		</form>
 		<form method='GET' action='' enctype="multipart/form-data">
-				<?
+				<?php
 				if($min_page != $now_page){	//前のページ
 					echo "<input type='hidden' name='privious' value='$now_page'>";
 					echo "<input type='submit' value='前へ'>";
